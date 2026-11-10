@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Slušaj</title>
+<title>Live Subtitles</title>
 <meta name="description" content="Listen-only live subtitles: Serbian / Slovak to English.">
 <meta name="theme-color" content="#0b0f17">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Slušaj">
+<meta name="apple-mobile-web-app-title" content="Subtitles">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -101,7 +101,7 @@
 </head>
 <body>
 <header>
-  <h1>Slušaj</h1>
+  <h1>Live Subtitles</h1>
   <div class="status"><span class="dot" id="dot"></span><span id="statusText">Idle</span></div>
   <button class="iconbtn" id="srcToggle" aria-label="Show or hide original text">Orig</button>
   <button class="iconbtn" id="openSettings" aria-label="Settings">⚙︎</button>
@@ -709,7 +709,12 @@
     foot.textContent = "Tip: keep the screen on (Settings → Display & Brightness → Auto-Lock → Never). Locking stops listening.";
   }
   function releaseWakeLock() { try { wakeLock && wakeLock.release(); } catch {} wakeLock = null; }
+  // Privacy: never listen in the background. Leaving the app, locking the screen or closing it stops the mic at once.
+  function stopIfHidden() { if (running) { stop(); showBanner("Stopped listening because you left the app. Tap the mic to start again.", "info"); } }
+  window.addEventListener("pagehide", stopIfHidden);
+  window.addEventListener("blur", () => { if (document.visibilityState === "hidden") stopIfHidden(); });
   document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") { stopIfHidden(); return; }
     if (document.visibilityState === "visible" && running && !wakeLock) requestWakeLock();
     if (document.visibilityState === "visible" && running && stream && stream.getAudioTracks().every(t => t.readyState === "ended")) {
       stop(); showBanner("Listening stopped while the app was in the background. Tap the mic to start again.", "info");
